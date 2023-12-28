@@ -1,31 +1,26 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 
 import { ContactForm } from './ContactForm/ContactForm';
 import { Filter } from './Filter/Filter';
-
 import { ContactList } from './ContactList/ContactList';
 import css from './ContactsForm.module.css';
 import { nanoid } from 'nanoid';
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    name: '',
-    filter: '',
-    number: '',
+export const App = () => {
+  const [contacts, setContacts] = useState([]);
+  const [name, setName] = useState('');
+  const [filter, setFilter] = useState('');
+  const [number, setNumber] = useState('');
+
+  const handleNameChange = e => {
+    setName(e.target.value);
   };
 
-  handleNameChange = e => {
-    this.setState({ name: e.target.value });
+  const handlePhoneChange = e => {
+    setNumber(e.target.value);
   };
 
-  handlePhoneChange = e => {
-    this.setState({ number: e.target.value });
-  };
-
-  handleAddContact = () => {
-    const { contacts, name, number } = this.state;
-
+  const handleAddContact = () => {
     if (name.trim() === '' || number.trim() === '') {
       alert('Please, enter name and phone number');
       return;
@@ -46,61 +41,55 @@ export class App extends Component {
       number: number.trim(),
     };
 
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, newContact],
-      name: '',
-      number: '',
-    }));
+    setContacts(
+      prevContacts => [...prevContacts, newContact],
+      setName(''),
+      setNumber('')
+    );
   };
 
-  handleFilter = e => {
-    this.setState({ filter: e.target.value });
+  const handleFilter = e => {
+    setFilter(e.target.value);
   };
 
-  handleDeleteContact = id => {
-    this.setState({
-      contacts: this.state.contacts.filter(contact => contact.id !== id),
-    });
+  const handleDeleteContact = id => {
+    setContacts(prevContacts =>
+      prevContacts.filter(contact => contact.id !== id)
+    );
   };
 
-  componentDidMount() {
+  useEffect(() => {
     const stringifiedContacts = localStorage.getItem('contacts');
     const contacts = JSON.parse(stringifiedContacts) ?? [];
-    this.setState({ contacts });
-  }
+    setContacts(contacts);
+  }, []);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      const stringifiedContacts = JSON.stringify(this.state.contacts);
-      localStorage.setItem('contacts', stringifiedContacts);
-    }
-  }
+  useEffect(() => {
+    const stringifiedContacts = JSON.stringify(contacts);
+    localStorage.setItem(contacts, stringifiedContacts);
+  }, [contacts]);
 
-  render() {
-    const { contacts, filter, name, number } = this.state;
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
 
-    const filteredContacts = contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filter.toLowerCase())
-    );
+  return (
+    <div className={css.form_container}>
+      <h1>Phonebook</h1>
 
-    return (
-      <div className={css.form_container}>
-        <h1>Phonebook</h1>
-
-        <ContactForm
-          name={name}
-          number={number}
-          handleNameChange={this.handleNameChange}
-          handleAddContact={this.handleAddContact}
-          handlePhoneChange={this.handlePhoneChange}
-        ></ContactForm>
-        <h2>Contacts</h2>
-        <Filter filter={filter} handleFilter={this.handleFilter}></Filter>
-        <ContactList
-          contacts={filteredContacts}
-          handleDeleteContact={this.handleDeleteContact}
-        ></ContactList>
-      </div>
-    );
-  }
-}
+      <ContactForm
+        name={name}
+        number={number}
+        handleNameChange={handleNameChange}
+        handleAddContact={handleAddContact}
+        handlePhoneChange={handlePhoneChange}
+      ></ContactForm>
+      <h2>Contacts</h2>
+      <Filter filter={filter} handleFilter={handleFilter}></Filter>
+      <ContactList
+        contacts={filteredContacts}
+        handleDeleteContact={handleDeleteContact}
+      ></ContactList>
+    </div>
+  );
+};
